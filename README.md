@@ -295,18 +295,7 @@ cd ~/ros2_ws
 source install/setup.bash
 ```
 
-
 Перевірка активних вузлів і топіків
-
-Відкриваємо другий термінал і виконуємо:
-
-```bash
-source /opt/ros/humble/setup.bash
-cd ~/ros2_ws
-source install/setup.bash
-```
-
-Перевіряємо активні вузли ROS 2:
 
 ```bash
 ros2 node list
