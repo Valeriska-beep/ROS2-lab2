@@ -200,3 +200,181 @@ ros2 topic echo /cmd_vel
 ```bash
 ros2 topic pub --once /cmd_vel geometry_msgs/msg/Twist "{linear: {x: 2.5}, angular: {z: 1.8}}"
 ```
+
+
+
+
+## Запуск готової програми:
+
+Відкриваємо перший термінал: 
+
+Активуємо середовище ROS 2 Humble:
+
+```bash
+source /opt/ros/humble/setup.bash
+```
+
+Переходимо в робочого простору:
+
+```bash
+cd ~/ros2_ws
+```
+
+Підключаємо зібране середовище:
+
+```bash
+source install/setup.bash
+```
+
+Перевіряємо наявність обох пакетів:
+
+```bash
+ros2 pkg list | grep -E '^(motion_control|robot_gui)$'
+```
+
+Перевіряємо доступні виконувані програми пакета motion_control:
+
+```bash
+ros2 pkg executables motion_control
+```
+
+Має відобразитися виконуваний файл motion_node.
+Перевіряємо виконувані програми пакета robot_gui:
+
+```bash
+ros2 pkg executables robot_gui
+```
+
+Має відобразитися gui_node.
+Перевірка реалізації в коді
+Перевіряємо підписку на /cmd_vel, обмеження швидкості та публікацію статусу:
+
+```bash
+grep -nE 'cmd_vel|motion_status|max_linear_speed|max_angular_speed|status_publisher' \
+src/motion_control/motion_control/motion_node.py
+```
+
+Це покаже рядки, які стосуються підписки, обмежень швидкості та публікації статусу.
+Для перевірки графічного інтерфейсу виконуємо (для 3 лб):
+
+```bash
+grep -nE 'cmd_vel|motion_status|QTimer|send_velocity' \
+src/robot_gui/robot_gui/gui_node.py
+```
+
+Команда grep знаходить у файлах рядки, які містять зазначені слова, а параметр -n показує номери рядків.
+
+Тестуємо Motion Node:
+Мета демонстрації: показати що нода приймає команди, обробляє лінійну й кутову швидкість та реагує на перевищення ліміту.
+
+Збираємо пакет:
+
+```bash
+cd ~/ros2_ws
+source /opt/ros/humble/setup.bash
+colcon build --packages-select motion_control
+source install/setup.bash
+```
+
+
+Запусти Motion Node
+У першому терміналі:
+
+```bash
+ros2 run motion_control motion_node
+```
+
+
+Термінал залишаємо відкритим. У ньому відображатимуться повідомлення вузла, зокрема інформаційні повідомлення INFO та попередження WARN.
+
+Відкриваємо другий термінал і підключаємо середовище:
+
+```bash
+source /opt/ros/humble/setup.bash
+cd ~/ros2_ws
+source install/setup.bash
+```
+
+
+Перевірка активних вузлів і топіків
+
+Відкриваємо другий термінал і виконуємо:
+
+```bash
+source /opt/ros/humble/setup.bash
+cd ~/ros2_ws
+source install/setup.bash
+```
+
+Перевіряємо активні вузли ROS 2:
+
+```bash
+ros2 node list
+```
+
+Перевіряємо доступні топіки:
+
+```bash
+ros2 topic list
+```
+
+Топіки /cmd_vel і /motion_status використовуються для передачі команд руху та інформації про стан робота відповідно.
+
+
+Надсилаємо одноразову команду з лінійною швидкістю 0.5 та кутовою швидкістю 0.2:
+
+У другому терміналі:
+
+```bash
+ros2 topic pub --once /cmd_vel geometry_msgs/msg/Twist "{linear: {x: 0.5}, angular: {z: 0.2}}"
+```
+
+У першому терміналі motion_node має вивести повідомлення про отримані або оброблені значення.
+
+Щоб окремо перевірити, що повідомлення справді надходять у топік, можна відкрити третій термінал:
+
+```bash
+source /opt/ros/humble/setup.bash
+cd ~/ros2_ws
+source install/setup.bash
+ros2 topic echo /cmd_vel
+```
+
+Тепер повторюємо команду з другого термінала. У третьому має з'явитися повідомлення Twist.
+
+Перевірка обмеження швидкості
+Надішлемо команду зі швидкістю, яка перевищує заданий ліміт:
+
+```bash
+ros2 topic pub --once /cmd_vel geometry_msgs/msg/Twist "{linear: {x: 2.0}, angular: {z: 0.0}}"
+```
+
+Очікувана поведінка реалізованої Motion Node:
+з'являється попередження WARN про перевищення ліміту;
+значення лінійної швидкості обмежується до 1.0 перед подальшою обробкою.
+
+Надсилаємо команду з кутовою швидкістю, що перевищує встановлений ліміт:
+
+```bash
+ros2 topic pub --once /cmd_vel geometry_msgs/msg/Twist "{linear: {x: 0.0}, angular: {z: 2.0}}"
+```
+
+Перевірка публікацію статусу
+У третьому терміналі:
+
+```bash
+ros2 topic echo /motion_status
+```
+
+У другому терміналі надсилаємо команду руху:
+
+```bash
+ros2 topic pub --once /cmd_vel geometry_msgs/msg/Twist "{linear: {x: 0.5}, angular: {z: 0.0}}"
+```
+
+Перевіряємо також зупинку
+Надсилаємо команду з нульовими значеннями лінійної та кутової швидкості:
+
+```bash
+ros2 topic pub --once /cmd_vel geometry_msgs/msg/Twist "{linear: {x: 0.0}, angular: {z: 0.0}}"
+```
