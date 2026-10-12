@@ -349,7 +349,7 @@ ros2 topic pub --once /cmd_vel geometry_msgs/msg/Twist "{linear: {x: 0.0}, angul
 ```
 
 Перевірка публікацію статусу
-У третьому терміналі:
+У четвертому терміналі:
 
 ```bash
 ros2 topic echo /motion_status
